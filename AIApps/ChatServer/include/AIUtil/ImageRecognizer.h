@@ -12,7 +12,7 @@ class ImageRecognizer {
 public:
     // Image model and label loading
     explicit ImageRecognizer(const std::string& model_path,
-        const std::string& label_path = "/root/imagenet_classes.txt");
+        const std::string& label_path = "/home/jrj/models/imagenet_classes_clean.txt");
 
     // Predict from file
     std::string PredictFromFile(const std::string& image_path);

@@ -28,10 +28,19 @@ void AIUploadSendHandler::handle(const http::HttpRequest& req, http::HttpRespons
             std::lock_guard<std::mutex> lock(server_->mutexForImageRecognizerMap);
             if (server_->ImageRecognizerMap.find(userId) == server_->ImageRecognizerMap.end()) {
 
+                // server_->ImageRecognizerMap.emplace(
+                //     userId,
+                //     std::make_shared<ImageRecognizer>("/root/models/mobilenetv2/mobilenetv2-7.onnx")  //todo:Remove hard coding
+                // );
+
                 server_->ImageRecognizerMap.emplace(
                     userId,
-                    std::make_shared<ImageRecognizer>("/root/models/mobilenetv2/mobilenetv2-7.onnx")  //todo:Remove hard coding
+                    std::make_shared<ImageRecognizer>(
+                        "/home/jrj/models/mobilenetv2/mobilenetv2-7.onnx",
+                        "/home/jrj/models/imagenet_classes_clean.txt"
+                    )
                 );
+
             }
             ImageRecognizerPtr = server_->ImageRecognizerMap[userId];
         }
