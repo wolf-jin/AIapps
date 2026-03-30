@@ -34,12 +34,14 @@ ChatServer::ChatServer(int port,
 
 void ChatServer::initialize() {
     std::cout << "ChatServer initialize start  ! " << std::endl;
+    //初始化MysqlUtil（用于和mysql对接的，封装了mysql相关句柄）
 	http::MysqlUtil::init("tcp://127.0.0.1:3306", "root", "root", "ChatHttpServer", 5);
-
+    //初始化Session，属于http服务框架底层的内容，和上层AI应用层没有关联
     initializeSession();
-
+    //初始化中间件，属于http服务框架底层的内容，和上层AI应用层没有关联
     initializeMiddleware();
-
+    //初始化路由接口，后续来请求，会通过具体路由的地址通过具体的Handler做相应业务处理
+    //如httpServer_.Get("/chat", std::make_shared<ChatHandler>(this));
     initializeRouter();
 }
 
@@ -53,7 +55,7 @@ void ChatServer::initChatMessage() {
 void ChatServer::readDataFromMySQL() {
 
 
-    std::string sql = "SELECT id, username,session_id, is_user, content, ts FROM chat_message ORDER BY ts ASC, id ASC";
+    std::string sql = "SELECT id, username, session_id, is_user, content, ts FROM chat_message ORDER BY ts ASC, id ASC";
 
     sql::ResultSet* res;
     try {

@@ -48,6 +48,7 @@ int main(int argc, char* argv[]) {
 
 
     RabbitMQThreadPool pool(RABBITMQ_HOST, QUEUE_NAME, THREAD_NUM, executeMysql);
+    
     pool.start();
 
     server.start();

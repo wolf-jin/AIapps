@@ -54,7 +54,8 @@ std::string DouBaoStrategy::getApiKey()const {
 
 
 std::string DouBaoStrategy::getModel() const {
-    return "doubao-seed-1-6-thinking-250715";
+    // return "doubao-seed-1-6-thinking-250715";
+    return "doubao-seed-2-0-lite-260215";
 }
 
 
