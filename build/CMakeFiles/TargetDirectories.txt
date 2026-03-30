@@ -1,0 +1,3 @@
+/home/jrj/CppAIService/build/CMakeFiles/http_server.dir
+/home/jrj/CppAIService/build/CMakeFiles/edit_cache.dir
+/home/jrj/CppAIService/build/CMakeFiles/rebuild_cache.dir

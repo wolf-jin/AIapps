@@ -168,6 +168,10 @@ json AIHelper::executeCurl(const json& payload) {
     }
 }
 
+
+
+
+
 // curl 回调函数，把返回的数据写到 string buffer
 size_t AIHelper::WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
     size_t totalSize = size * nmemb;
