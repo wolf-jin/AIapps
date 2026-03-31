@@ -34,17 +34,24 @@ ChatServer::ChatServer(int port,
 
 void ChatServer::initialize() {
     std::cout << "ChatServer initialize start  ! " << std::endl;
-    //初始化MysqlUtil（用于和mysql对接的，封装了mysql相关句柄）
+    // 第一件：初始化 MySQL 工具
+    //初始化MysqlUtil工具（用于和mysql对接的，封装了mysql相关句柄）
 	http::MysqlUtil::init("tcp://127.0.0.1:3306", "root", "root", "ChatHttpServer", 5);
+    // 第二件：初始化 Session
     //初始化Session，属于http服务框架底层的内容，和上层AI应用层没有关联
     initializeSession();
-    //初始化中间件，属于http服务框架底层的内容，和上层AI应用层没有关联
+    // 第三件：初始化中间件，属于http服务框架底层的内容，和上层AI应用层没有关联
+    // 初始化中间件
     initializeMiddleware();
+    // 第四件：初始化路由接口
     //初始化路由接口，后续来请求，会通过具体路由的地址通过具体的Handler做相应业务处理
     //如httpServer_.Get("/chat", std::make_shared<ChatHandler>(this));
     initializeRouter();
 }
-
+// initChatMessage()：业务状态预热入口
+// 这一步和 initialize() 不同。
+// initialize() 负责搭框架，initChatMessage() 负责恢复业务状态。
+// 从数据库恢复历史聊天上下文到内存
 void ChatServer::initChatMessage() {
 
     std::cout << "initChatMessage start ! " << std::endl;
@@ -87,7 +94,7 @@ void ChatServer::readDataFromMySQL() {
         }
 
         auto& userSessions = chatInformation[user_id];
-
+        // 把数据库里的历史消息重新装回每个 session 的 AIHelper 里。
         std::shared_ptr<AIHelper> helper;
         auto itSession = userSessions.find(session_id);
         if (itSession == userSessions.end()) {
@@ -105,7 +112,7 @@ void ChatServer::readDataFromMySQL() {
 }
 
 
-
+// 这说明 ChatServer 本身不处理底层网络线程调度，而是把这些事交给内部组合的 httpServe
 void ChatServer::setThreadNum(int numThreads) {
     httpServer_.setThreadNum(numThreads);
 }
@@ -115,9 +122,10 @@ void ChatServer::start() {
     httpServer_.start();
 }
 
-
+// 初始化路由
+// 系统所有对外 API 的总路由注册表
 void ChatServer::initializeRouter() {
-
+    2
     httpServer_.Get("/", std::make_shared<ChatEntryHandler>(this));
     httpServer_.Get("/entry", std::make_shared<ChatEntryHandler>(this));
     
@@ -146,6 +154,27 @@ void ChatServer::initializeRouter() {
     httpServer_.Post("/chat/tts", std::make_shared<ChatSpeechHandler>(this));
 }
 
+
+/*
+
+内存型 Session 存储
+
+
+登录态保存在服务进程内存里
+服务重启后 session 大概率丢失
+适合单机开发和 demo
+
+
+这和“聊天历史保存在 MySQL”不同，你要分清：
+
+session：登录状态
+chat history：聊天历史
+
+前者是内存的，后者是持久化的。
+*/
+
+
+// 用来记住“谁登录了”。你登录后，服务器会在内存里存一个凭证，你下次发消息就不用再输密码了。
 void ChatServer::initializeSession() {
 
     auto sessionStorage = std::make_unique<http::session::MemorySessionStorage>();
@@ -155,6 +184,11 @@ void ChatServer::initializeSession() {
     setSessionManager(std::move(sessionManager));
 }
 
+
+
+
+// CORS（跨域资源共享）：这是做前后端分离项目必备的。没有它，浏览器会因为安全策略拦截掉前端发给后端的请求。
+
 void ChatServer::initializeMiddleware() {
 
     auto corsMiddleware = std::make_shared<http::middleware::CorsMiddleware>();
@@ -162,7 +196,26 @@ void ChatServer::initializeMiddleware() {
     httpServer_.addMiddleware(corsMiddleware);
 }
 
+/*
 
+这个函数负责把一组参数统一写入 HttpResponse：
+
+版本
+状态码
+状态消息
+是否关闭连接
+内容类型
+内容长度
+body
+
+它存在的意义是：
+
+避免每个 Handler 都重复写一遍 HTTP 响应拼装逻辑
+
+
+*/
+
+。
 void ChatServer::packageResp(const std::string& version,
     http::HttpResponse::HttpStatusCode statusCode,
     const std::string& statusMsg,

@@ -6,7 +6,7 @@
 #include "../ChatServer.h"
 
 
-
+// 说明它工作在 HTTP 接口层，负责处理一个具体 URL 的请求。
 class ChatCreateAndSendHandler : public http::router::RouterHandler
 {
 public:
@@ -17,5 +17,5 @@ private:
 
 private:
     ChatServer* server_;
-    http::MysqlUtil     mysqlUtil_;
+    // http::MysqlUtil     mysqlUtil_;
 };
