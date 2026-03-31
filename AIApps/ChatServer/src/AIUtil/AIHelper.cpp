@@ -4,55 +4,99 @@
 #include<chrono>
 
 // 构造函数
+// 构造时会设置默认策略。
+// 也就是说，新建一个 AIHelper 后，它不是空白的，会先带一个默认模型策略。
 AIHelper::AIHelper() {
     //默认使用阿里云大模型
     strategy = StrategyFactory::instance().create("1");
 }
 
+// 切换当前会话所使用的模型策略。
 void AIHelper::setStrategy(std::shared_ptr<AIStrategy> strat) {
     strategy = strat;
 }
 
+/*
+作用是：
 
-// 设置默认模型
-//void AIHelper::setModel(const std::string& modelName) {
-  //  model_ = modelName;
-//}
+把一条消息放进当前会话内存上下文
+再把这条消息异步入库
+
+所以它不是单纯“加到 vector 里”，而是：
+
+内存更新 + 持久化投递
+
+*/
 
 // 添加一条用户消息
-void AIHelper::addMessage(int userId,const std::string& userName, bool is_user,const std::string& userInput, std::string sessionId) {
-    auto now = std::chrono::system_clock::now();
+void AIHelper::addMessage(int userId, const std::string& userName, bool is_user, const std::string& userInput, std::string sessionId) {
+    auto now = std::chrono::system_clock::now(); // 
     auto duration = now.time_since_epoch();
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-    messages.push_back({ userInput,ms });
-    //消息队列异步入库
+    // 生成当前时间戳， 转成毫秒时间戳
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count(); 
+    // 写如内存上下文，把当前消息先放进当前会话的 messages 里。
+    messages.push_back({ userInput, ms });
+    //消息队列异步入库，也就是说，这条消息不只是进入当前会话上下文，还会被异步写入数据库。
     pushMessageToMysql(userId, userName, is_user, userInput, ms, sessionId);
 }
 
+/*
+这是和 addMessage(...) 不同的另一个入口。
+
+它只负责：把历史消息恢复回内存上下文
+
+不做数据库写入。
+给ChatServer::readDatabaseMessages(...)调用，用于服务启动时从数据库恢复历史消息。
+这非常合理，因为它就是为“服务启动时从数据库恢复历史消息”准备的。
+
+*/
 void AIHelper::restoreMessage(const std::string& userInput,long long ms) {
     messages.push_back({ userInput,ms });
 }
 
 
-// 发送聊天消息
-std::string AIHelper::chat(int userId,std::string userName, std::string sessionId, std::string userQuestion, std::string modelType) {
+/*
+这是整个类最重要的函数。
 
-    //设置策略
-    setStrategy(StrategyFactory::instance().create(modelType));
+它负责完整聊天流程：
+
+切换模型策略
+拼消息上下文
+调模型
+解析结果
+写回上下文
+异步入库
+返回最终答案
+
+这个函数就是整条聊天主线的核心。
+
+*/
+std::string AIHelper::chat(int userId, std::string userName, std::string sessionId, std::string userQuestion, std::string modelType) {
 
     
+    // 前端传什么modelType，当前会话这次调用就切到对应的策略上
+    setStrategy(StrategyFactory::instance().create(modelType));
+
+    // 路线 A：普通模型
     if (false == strategy->isMCPModel) {
 
+        // 把用户问题加入上下文，数据库异步入库
         addMessage(userId, userName, true, userQuestion, sessionId);
+        // AIHelper 自己不关心不同模型平台的请求 JSON 长什么样。
+        // 它把“如何根据上下文拼请求体”交给策略层去做。
+        // 这就是策略模式的核心价值之一。
         json payload = strategy->buildRequest(this->messages);
 
         //执行请求
+        // 这一步通过 curl 把请求发到外部模型平台。
         json response = executeCurl(payload);
+        // 同样地，AIHelper 也不关心“外部模型平台的响应 JSON 长什么样”，它把“如何从响应里解析出答案”交给策略层去做。
         std::string answer = strategy->parseResponse(response);
+        // 把AI回复加入上下文，数据库异步入库
         addMessage(userId, userName, false, answer, sessionId);
         return answer.empty() ? "[Error] 无法解析响应" : answer;
     }
-    //说明支持MCP
+    // 路线 B：MCP 模型（需要工具调用的模型）
     AIConfig config;
     config.loadFromFile("../AIApps/ChatServer/resource/config.json");
     std::string tempUserQuestion =config.buildPrompt(userQuestion);
@@ -118,10 +162,12 @@ std::string AIHelper::chat(int userId,std::string userName, std::string sessionI
 }
 
 // 发送自定义请求体
+// 允许外部直接传一个自定义 payload，让 AIHelper 帮你发请求。
+// 它不是主聊天链路核心函数，更像一个辅助接口。
 json AIHelper::request(const json& payload) {
     return executeCurl(payload);
 }
-
+// 作用是拿当前会话的内存消息列表。
 std::vector<std::pair<std::string, long long>> AIHelper::GetMessages() {
     return this->messages;
 }

@@ -54,18 +54,15 @@ private:
 
     /*
     * 重构代码，将其使用策略模式&&工厂模式抽离出来
-    std::string apiKey_;
-    //默认用通义千问
-    std::string model_ = "qwen-plus";
-    //对应地址
-    std::string apiUrl_ = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
+    当前会话正在使用的模型策略。
     */
     std::shared_ptr<AIStrategy> strategy;
 
     //一个用户针对一个AIHelper，messages存放用户的历史对话
     //偶数下标代表用户的信息，奇数下标是ai返回的内容
     //后者代表时间戳
+    // 当前会话正在使用的模型策略。
     std::vector<std::pair<std::string, long long>> messages;
 
-    //http::MysqlUtil mysqlUtil_;
+   
 };
