@@ -23,7 +23,7 @@ public:
 
     virtual std::string getModel() const = 0;
 
-
+    
     virtual json buildRequest(const std::vector<std::pair<std::string, long long>>& messages) const = 0;
 
 
@@ -47,6 +47,8 @@ public:
     std::string getApiKey() const override;
     std::string getModel() const override;
 
+    // 把当前会话上下文转成目标平台要求的 JSON 请求体。
+    // 这是整个策略层最关键的函数之一。
     json buildRequest(const std::vector<std::pair<std::string, long long>>& messages) const override;
     std::string parseResponse(const json& response) const override;
 
@@ -110,6 +112,12 @@ public:
     std::string getModel() const override;
 
     json buildRequest(const std::vector<std::pair<std::string, long long>>& messages) const override;
+
+    /*
+    把平台返回的 JSON 解析成最终字符串答案。
+
+    这也是最关键的函数之一。
+    */
     std::string parseResponse(const json& response) const override;
 
 private:
