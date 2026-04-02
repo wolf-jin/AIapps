@@ -17,4 +17,4 @@ set +a
 
 cd "$BUILD_DIR"
 
-./http_server -p "$PORT"
+exec ./http_server -p "$PORT"

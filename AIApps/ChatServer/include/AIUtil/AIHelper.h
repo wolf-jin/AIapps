@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <tuple>
 #include <curl/curl.h>
 #include <iostream>
 #include <sstream>
@@ -28,7 +29,7 @@ public:
     // 添加一条消息
     void addMessage(int userId, const std::string& userName, bool is_user, const std::string& userInput, std::string sessionId);
     // 恢复一条消息
-    void restoreMessage(const std::string& userInput, long long ms);
+    void restoreMessage(int is_user, const std::string& userInput, long long ms);
 
     // 发送聊天消息，返回AI的响应内容
     // messages: [{"role":"system","content":"..."}, {"role":"user","content":"..."}]
@@ -37,7 +38,15 @@ public:
     // 可选：发送自定义请求体
     json request(const json& payload);
 
-    std::vector<std::pair<std::string, long long>> GetMessages();
+    // 🌟 架构师修改：返回值从 pair 升级为 tuple<int(身份), string(内容), long long(时间)>
+    std::vector<std::tuple<int, std::string, long long>> GetMessages();
+
+
+    // std::vector<std::pair<std::string, long long>> GetMessages();
+
+
+
+    
 
 private:
     std::string escapeString(const std::string& input);
@@ -62,7 +71,10 @@ private:
     //偶数下标代表用户的信息，奇数下标是ai返回的内容
     //后者代表时间戳
     // 当前会话正在使用的模型策略。
-    std::vector<std::pair<std::string, long long>> messages;
+    // std::vector<std::pair<std::string, long long>> messages;
+
+    // 🌟 架构师修改：底层数据结构彻底抛弃 pair，采用 tuple 强绑定身份标识！
+    std::vector<std::tuple<int, std::string, long long>> messages;
 
    
 };

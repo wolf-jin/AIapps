@@ -13,5 +13,5 @@ private:
 
 private:
     ChatServer* server_;
-    http::MysqlUtil     mysqlUtil_;
+    
 };

@@ -35,7 +35,13 @@ void AIHelper::addMessage(int userId, const std::string& userName, bool is_user,
     // 生成当前时间戳， 转成毫秒时间戳
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count(); 
     // 写如内存上下文，把当前消息先放进当前会话的 messages 里。
-    messages.push_back({ userInput, ms });
+
+    // 使用 std::make_tuple 强绑定身份 (1代表用户, 0代表AI)
+    messages.push_back(std::make_tuple(is_user ? 1 : 0, userInput, ms));
+
+    // messages.push_back({ userInput, ms });
+
+
     //消息队列异步入库，也就是说，这条消息不只是进入当前会话上下文，还会被异步写入数据库。
     pushMessageToMysql(userId, userName, is_user, userInput, ms, sessionId);
 }
@@ -50,9 +56,17 @@ void AIHelper::addMessage(int userId, const std::string& userName, bool is_user,
 这非常合理，因为它就是为“服务启动时从数据库恢复历史消息”准备的。
 
 */
-void AIHelper::restoreMessage(const std::string& userInput,long long ms) {
-    messages.push_back({ userInput,ms });
+// void AIHelper::restoreMessage(const std::string& userInput,long long ms) {
+//     messages.push_back({ userInput,ms });
+// }
+
+// 🌟 修改 2：恢复消息时，把从数据库读到的 is_user 塞进去
+void AIHelper::restoreMessage(int is_user, const std::string& userInput, long long ms) {
+    messages.push_back(std::make_tuple(is_user, userInput, ms));
 }
+
+
+
 
 
 /*
@@ -71,6 +85,8 @@ void AIHelper::restoreMessage(const std::string& userInput,long long ms) {
 这个函数就是整条聊天主线的核心。
 
 */
+
+// 🌟 修改 4：chat 函数里的临时 Prompt 也需要适配 tuple (注意看里面 push_back 的改动)
 std::string AIHelper::chat(int userId, std::string userName, std::string sessionId, std::string userQuestion, std::string modelType) {
 
     
@@ -103,7 +119,12 @@ std::string AIHelper::chat(int userId, std::string userName, std::string session
     // 构造第一次增强提示
     std::string tempUserQuestion =config.buildPrompt(userQuestion);
     std::cout << "tempUserQuestion is " << tempUserQuestion << std::endl;
-    messages.push_back({ tempUserQuestion, 0 });
+
+
+    // 适配 tuple：默认临时提示词算作用户发的 (1)
+    messages.push_back(std::make_tuple(1, tempUserQuestion, 0));
+
+    // messages.push_back({ tempUserQuestion, 0 });
 
     // 第一次调用AI，判断是否需要工具调用
     // 这轮提示只是为了本轮决策，不想污染正式会话历史。
@@ -164,7 +185,7 @@ std::string AIHelper::chat(int userId, std::string userName, std::string session
         addMessage(userId, userName, true, userQuestion, sessionId);
         addMessage(userId, userName, false, err, sessionId);
 
-        std::cout << "Tool call failed" << std::endl << std::string(e.what());
+        std::cout << "Tool call failed\n" << std::endl << std::string(e.what());
         return err;
     }
 
@@ -180,7 +201,11 @@ std::string AIHelper::chat(int userId, std::string userName, std::string session
     std::string secondPrompt = config.buildToolResultPrompt(userQuestion, call.toolName, call.args, toolResult);
     
     std::cout << "secondPrompt is " << secondPrompt << std::endl;
-    messages.push_back({ secondPrompt, 0 });
+
+    // 适配 tuple
+    messages.push_back(std::make_tuple(1, secondPrompt, 0));
+    
+    // messages.push_back({ secondPrompt, 0 });
 
     json secondReq = strategy->buildRequest(messages);
     json secondResp = executeCurl(secondReq);
@@ -213,9 +238,15 @@ json AIHelper::request(const json& payload) {
     return executeCurl(payload);
 }
 // 作用是拿当前会话的内存消息列表。
-std::vector<std::pair<std::string, long long>> AIHelper::GetMessages() {
+
+// 🌟 修改 3：GetMessages 返回升级后的 tuple
+std::vector<std::tuple<int, std::string, long long>> AIHelper::GetMessages() {
     return this->messages;
 }
+
+// std::vector<std::pair<std::string, long long>> AIHelper::GetMessages() {
+//     return this->messages;
+// }
 
 
 // 内部方法：执行 curl 请求
@@ -340,13 +371,21 @@ void AIHelper::pushMessageToMysql(int userId, const std::string& userName, bool 
     std::string safeUserName = escapeString(userName);
     std::string safeUserInput = escapeString(userInput);
 
-    std::string sql = "INSERT INTO chat_message (id, username, session_id, is_user, content, ts) VALUES ("
-        + std::to_string(userId) + ", "
-        + "'" + safeUserName + "', "
-        + sessionId + ", "
-        + std::to_string(is_user ? 1 : 0) + ", "
-        + "'" + safeUserInput + "', "
+    // std::string sql = "INSERT INTO chat_message (id, username, session_id, is_user, content, ts) VALUES ("
+    //     + std::to_string(userId) + ", "
+    //     + "'" + safeUserName + "', "
+    //     + sessionId + ", "
+    //     + std::to_string(is_user ? 1 : 0) + ", "
+    //     + "'" + safeUserInput + "', "
+    //     + std::to_string(ms) + ")";
+
+    std::string sql = "INSERT INTO chat_message (username, session_id, is_user, content, ts) VALUES ('"
+        + safeUserName + "', '"
+        + sessionId + "', "
+        + std::to_string(is_user ? 1 : 0) + ", '"
+        + safeUserInput + "', "
         + std::to_string(ms) + ")";
+
 
 
     MQManager::instance().publish("sql_queue", sql);

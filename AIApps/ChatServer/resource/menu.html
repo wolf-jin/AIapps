@@ -244,6 +244,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>欢迎来到AI助手界面</title>
+
+    <link rel="icon" href="data:;base64,=">
+
     <style>
         /* ================= 全局太空与网格背景 ================= */
         /* ================= 全局太空与网格背景 ================= */
@@ -570,12 +573,14 @@
         });
 
         // 页面加载时用户检查
+        /*👇 暂时注释掉，调完 UI 再打开
         window.addEventListener('load', function () {
             const userId = sessionStorage.getItem('userId');
             if (!userId) {
                 window.location.href = '/entry';
             }
         });
+        */
     </script>
 </body>
 </html>

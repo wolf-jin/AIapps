@@ -105,7 +105,7 @@ void ChatServer::readDataFromMySQL() {
             helper = itSession->second;
         }
 
-        helper->restoreMessage(content, ts);
+        helper->restoreMessage(is_user,content, ts);
     }
 
     std::cout << "readDataFromMySQL finished" << std::endl;
@@ -125,7 +125,7 @@ void ChatServer::start() {
 // 初始化路由
 // 系统所有对外 API 的总路由注册表
 void ChatServer::initializeRouter() {
-    2
+    
     httpServer_.Get("/", std::make_shared<ChatEntryHandler>(this));
     httpServer_.Get("/entry", std::make_shared<ChatEntryHandler>(this));
     
@@ -209,13 +209,11 @@ void ChatServer::initializeMiddleware() {
 body
 
 它存在的意义是：
-
 避免每个 Handler 都重复写一遍 HTTP 响应拼装逻辑
-
 
 */
 
-。
+
 void ChatServer::packageResp(const std::string& version,
     http::HttpResponse::HttpStatusCode statusCode,
     const std::string& statusMsg,

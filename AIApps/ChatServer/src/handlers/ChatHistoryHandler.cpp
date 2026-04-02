@@ -32,7 +32,8 @@ void ChatHistoryHandler::handle(const http::HttpRequest& req, http::HttpResponse
             if (j.contains("sessionId")) sessionId = j["sessionId"];
         }
 
-        std::vector<std::pair<std::string, long long>> messages;
+        std::vector<std::tuple<int, std::string, long long>> messages;
+        // std::vector<std::pair<std::string, long long>> messages;
 
         {
             std::shared_ptr<AIHelper> AIHelperPtr;
@@ -58,8 +59,10 @@ void ChatHistoryHandler::handle(const http::HttpRequest& req, http::HttpResponse
 
         for (size_t i = 0; i < messages.size(); ++i) {
             json msgJson;
-            msgJson["is_user"] = (i % 2 == 0);
-            msgJson["content"] = messages[i].first;
+            // 🌟 1. 抛弃 % 2，用 std::get<0> 获取绝对真实的 is_user 身份，并转成布尔值
+            msgJson["is_user"] = (std::get<0>(messages[i]) == 1);
+            // 🌟 2. 抛弃 .first，用 std::get<1> 获取真实的文本内容
+            msgJson["content"] = std::get<1>(messages[i]);
             successResp["history"].push_back(msgJson);
         }
 

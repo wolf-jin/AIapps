@@ -22,7 +22,7 @@ void ChatHandler::handle(const http::HttpRequest& req, http::HttpResponse* resp)
                 errorBody, resp);
             return;
         }
-
+ 
 
         int userId = std::stoi(session->getValue("userId"));
         std::string username = session->getValue("username");

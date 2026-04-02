@@ -33,20 +33,36 @@ void ChatSpeechHandler::handle(const http::HttpRequest& req, http::HttpResponse*
             auto j = json::parse(body);
             if (j.contains("text")) text = j["text"];
         }
+        // =========================================================
+        // 🌟 架构师的微创手术：C++11 Magic Statics (静态局部初始化)
+        // =========================================================
+        // 1. 静态读取环境变量：只在服务器第一次接收到语音请求时查一次操作系统，以后直接从内存读！
+        static const char* secretEnv = std::getenv("BAIDU_CLIENT_SECRET");
+        static const char* idEnv = std::getenv("BAIDU_CLIENT_ID");
 
-
-        const char* secretEnv = std::getenv("BAIDU_CLIENT_SECRET");
-        const char* idEnv = std::getenv("BAIDU_CLIENT_ID");
+        // const char* secretEnv = std::getenv("BAIDU_CLIENT_SECRET");
+        // const char* idEnv = std::getenv("BAIDU_CLIENT_ID");
 
         if (!secretEnv) throw std::runtime_error("BAIDU_CLIENT_SECRET not found!");
         if (!idEnv) throw std::runtime_error("BAIDU_CLIENT_ID not found!");
 
-        std::string clientSecret(secretEnv);
-        std::string clientId(idEnv);
-
-        AISpeechProcessor speechProcessor(clientId, clientSecret);
         
 
+        
+
+        // std::string clientSecret(secretEnv);
+        // std::string clientId(idEnv);
+
+        // 2. 核心大招：静态实例化 Processor！
+        // C++11 标准强制保证了局部 static 变量的初始化是【绝对线程安全】的。
+        // 不管有多少个 Worker 线程同时冲进这个接口，这行代码只会被执行一次！
+        // Token 只会去百度请求一次！后续所有请求全服共享这个 Processor！
+
+        static AISpeechProcessor speechProcessor{std::string(idEnv), std::string(secretEnv)};
+
+        // AISpeechProcessor speechProcessor(clientId, clientSecret);
+        
+        // 直接复用静态实例发起合成请求
         std::string speechUrl = speechProcessor.synthesize(text,
                                                            "mp3-16k", 
                                                            "zh",  
