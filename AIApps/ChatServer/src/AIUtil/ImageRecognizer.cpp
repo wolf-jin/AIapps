@@ -65,11 +65,23 @@ std::string ImageRecognizer::PredictFromMat(const cv::Mat& img_raw) {
     }
 
     cv::Mat img;
-    cv::resize(img_raw, img, cv::Size(input_width, input_height));
-    img.convertTo(img, CV_32F, 1.0 / 255.0);
+    // cv::resize(img_raw, img, cv::Size(input_width, input_height));
+    // img.convertTo(img, CV_32F, 1.0 / 255.0);
 
     // NHWC -> NCHW
-    cv::dnn::blobFromImage(img, img);
+    // cv::dnn::blobFromImage(img, img);
+
+    
+    // ✅ 架构师的满血预处理
+    // blobFromImage 参数：(输入图像, 缩放系数, 目标尺寸, 均值, 是否交换RB通道, 是否裁剪)
+    // 这里的 true 就是让 OpenCV 自动把 BGR 翻转成 RGB！
+    cv::dnn::blobFromImage(img_raw, img, 1.0 / 255.0, 
+                           cv::Size(input_width, input_height), 
+                           cv::Scalar(0, 0, 0), true, false);
+
+
+    // 注意：如果是严格的 ImageNet 模型，均值通常是 cv::Scalar(103.94, 116.78, 123.68)，
+    // 这里先保持原作者的简单缩放，但 BGR 转 RGB 是必须加的！
 
     std::vector<int64_t> dims = { 1, 3, input_height, input_width };
     size_t input_tensor_size = 1 * 3 * input_height * input_width;

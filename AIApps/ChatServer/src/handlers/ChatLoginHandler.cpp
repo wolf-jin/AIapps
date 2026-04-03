@@ -56,7 +56,7 @@ void ChatLoginHandler::handle(const http::HttpRequest& req, http::HttpResponse* 
 
                 json failureResp;
                 failureResp["success"] = false;
-                failureResp["error"] = "˺ط¼";
+                failureResp["error"] = "Account already logged in from another session";
                 std::string failureBody = failureResp.dump(4);
 
                 resp->setStatusLine(req.getVersion(), http::HttpResponse::k403Forbidden, "Forbidden");
