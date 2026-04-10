@@ -66,7 +66,9 @@ public:
         std::cout << "发送请求出去sendGetRequest" << std::endl;
         std::string request = 
             "GET " + path + " HTTP/1.1\r\n"
-            "Host: localhost\r\n"
+            "Host: www.baidu.com\r\n"  // 🌟 改成对应的域名
+            "User-Agent: curl/7.68.0\r\n" // 顺手加个伪装头，显得更专业
+            // "Host: localhost\r\n"
             "Connection: close\r\n"
             "\r\n";
 
@@ -92,7 +94,7 @@ private:
 int main() {
     try {
         HttpsClient client;
-        client.connect("127.0.0.1", 443);
+        client.connect("180.101.49.44", 443);
         std::cout << "连接成功connect" << std::endl;
         client.sendGetRequest("/");
         return 0;

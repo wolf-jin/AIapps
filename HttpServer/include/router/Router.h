@@ -40,11 +40,7 @@ public:
     // 为RouteKey 定义哈希函数
     struct RouteKeyHash
     {
-        // size_t operator()(const RouteKey& key) const
-        // {
-        //     return std::hash<int>{}(static_cast<int>(key.method)) ^
-        //            std::hash<std::string>{}(key.path);
-        // }
+        
         size_t operator()(const RouteKey &key) const
         {
             size_t methodHash = std::hash<int>{}(static_cast<int>(key.method));

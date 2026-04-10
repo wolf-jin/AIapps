@@ -61,7 +61,7 @@ void RabbitMQThreadPool::worker(int id) {
         while (!stop_) {
             AmqpClient::Envelope::ptr_t env;
             // 真正从队列里尝试取一条消息。
-            // 
+           
             bool ok = channel->BasicConsumeMessage(consumer_tag, env, 500); // 500ms 
             if (ok && env) {
                 // 这一步就是把 RabbitMQ 消息包裹里的正文取出来。

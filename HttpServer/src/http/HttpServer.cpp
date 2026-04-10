@@ -30,7 +30,7 @@ HttpServer::HttpServer(int port,
 // 服务器运行函数
 void HttpServer::start()
 {
-    LOG_WARN << "HttpServer[" << server_.name() << "] starts listening on" << server_.ipPort();
+    LOG_WARN << "HttpServer[" << server_.name() << "] starts listening on " << server_.ipPort();
     server_.start();
     mainLoop_.loop();
 }
