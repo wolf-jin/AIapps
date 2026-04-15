@@ -15,5 +15,5 @@ private:
     bool isUserExist(const std::string& username);
 private:
     ChatServer* server_;
-    http::MysqlUtil     mysqlUtil_;
+    http::MysqlUtil    mysqlUtil_;
 };

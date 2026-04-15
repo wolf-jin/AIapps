@@ -115,7 +115,7 @@ void ChatSendHandler::handle(const http::HttpRequest& req, http::HttpResponse* r
         
         */
        // 构造成功响应
-        std::string aiInformation=AIHelperPtr->chat(userId, username, sessionId, userQuestion, modelType);
+        std::string aiInformation = AIHelperPtr->chat(userId, username, sessionId, userQuestion, modelType);
         json successResp;
         successResp["success"] = true;
         successResp["Information"] = aiInformation;

@@ -41,7 +41,6 @@ void AIHelper::addMessage(int userId, const std::string& userName, bool is_user,
 
     // messages.push_back({ userInput, ms });
 
-
     //消息队列异步入库，也就是说，这条消息不只是进入当前会话上下文，还会被异步写入数据库。
     pushMessageToMysql(userId, userName, is_user, userInput, ms, sessionId);
 }
@@ -93,7 +92,7 @@ std::string AIHelper::chat(int userId, std::string userName, std::string session
     // 前端传什么modelType，当前会话这次调用就切到对应的策略上
     setStrategy(StrategyFactory::instance().create(modelType));
 
-    // 路线 A：普通模型
+    // 路线 A：普通4模型
     if (false == strategy->isMCPModel) {
 
         // 把用户问题加入上下文，数据库异步入库
@@ -117,7 +116,7 @@ std::string AIHelper::chat(int userId, std::string userName, std::string session
     config.loadFromFile("../AIApps/ChatServer/resource/config.json");
 
     // 构造第一次增强提示
-    std::string tempUserQuestion =config.buildPrompt(userQuestion);
+    std::string tempUserQuestion = config.buildPrompt(userQuestion);
     std::cout << "tempUserQuestion is " << tempUserQuestion << std::endl;
 
 
@@ -251,20 +250,13 @@ std::vector<std::tuple<int, std::string, long long>> AIHelper::GetMessages() {
 
 // 内部方法：执行 curl 请求
 json AIHelper::executeCurl(const json& payload) {
-    // 初始化 curl， 拿到一个 curl 句柄。
+    // 初始化 curl， 拿到一个 curl 句柄。(socket)
     CURL* curl = curl_easy_init();
     if (!curl) {
         throw std::runtime_error("Failed to initialize curl");
     }
-    /*
-    这行会把 API Key 直接打印到日志。
 
-    这在调试时有用，但正式环境非常不安全。
-    因为日志一旦泄露，密钥就暴露了。
-
-    所以这行在生产环境里应该删掉。
-    */
-    std::cout<<"test "<< strategy->getApiUrl().c_str()<<' '<< strategy->getApiKey()<<std::endl;
+    // std::cout<<"test "<< strategy->getApiUrl().c_str() << ' ' << strategy->getApiKey() << std::endl;
 
     std::string readBuffer;
     struct curl_slist* headers = nullptr;
@@ -277,20 +269,6 @@ json AIHelper::executeCurl(const json& payload) {
     //把请求体序列化成字符串
     std::string payloadStr = payload.dump();
 
-    /*
-    设置 curl 参数
-
-    包括：
-
-    CURLOPT_URL
-    CURLOPT_HTTPHEADER
-    CURLOPT_POSTFIELDS
-    CURLOPT_WRITEFUNCTION
-    CURLOPT_WRITEDATA
-
-    这一步就是把请求真正配置好。
-    
-    */
     curl_easy_setopt(curl, CURLOPT_URL, strategy->getApiUrl().c_str());
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payloadStr.c_str());

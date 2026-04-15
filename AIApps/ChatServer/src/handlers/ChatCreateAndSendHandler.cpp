@@ -60,7 +60,7 @@ void ChatCreateAndSendHandler::handle(const http::HttpRequest& req, http::HttpRe
         AISessionIdGenerator generator;
         // 生成一个新的 sessionId，代表一个新的会话。
         std::string sessionId = generator.generate();
-        std::cout<<"sessionId: "<<sessionId<<std::endl;
+        std::cout <<"sessionId: "<< sessionId <<std::endl;
 
         // 为新会话创建 AIHelper
         // 新建会话，必须同时维护两张表：chatInformation 和 sessionsIdsMap
@@ -111,7 +111,7 @@ void ChatCreateAndSendHandler::handle(const http::HttpRequest& req, http::HttpRe
         异步落库
         
         */
-        std::string aiInformation=AIHelperPtr->chat(userId, username,sessionId, userQuestion, modelType);
+        std::string aiInformation=AIHelperPtr->chat(userId, username, sessionId, userQuestion, modelType);
         json successResp;
         successResp["success"] = true; // 调用成功
         successResp["Information"] = aiInformation; // AI 第一条的回复

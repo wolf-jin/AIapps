@@ -1,14 +1,15 @@
 #include "../include/AIUtil/ImageRecognizer.h"
 
-ImageRecognizer::ImageRecognizer(const std::string& model_path,
-    const std::string& label_path)
-    : env(ORT_LOGGING_LEVEL_WARNING, "ImageRecognizer")
+ImageRecognizer::ImageRecognizer(
+            const std::string& model_path,
+            const std::string& label_path)
+            : env(ORT_LOGGING_LEVEL_WARNING, "ImageRecognizer")
 {
     Ort::SessionOptions session_options;
-    session_options.SetIntraOpNumThreads(1);
+    session_options.SetIntraOpNumThreads(1); // 只使用1个线程
     session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
 
-    session = std::make_unique<Ort::Session>(env, model_path.c_str(), session_options);
+    session = std::make_unique<Ort::Session>(env, model_path.c_str(), session_options); // 加载模型 到内存的session指针
     allocator = std::make_unique<Ort::AllocatorWithDefaultOptions>();
 
 

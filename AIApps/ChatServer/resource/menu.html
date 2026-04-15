@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -133,6 +133,8 @@
     </style>
 </head>
 
+
+
 <body>
     
     <script>
@@ -236,4 +238,89 @@
     </script>
 </body>
 </html> 
+ -->
 
+
+ 
+<!DOCTYPE html>
+<html lang="en">
+    
+
+
+
+<head>
+    <meta charset="UTF-8">
+    <title>极简版 AI 助手菜单</title>
+</head>
+
+<!-- 网页的“身体骨架”（顾客能看见的按钮） -->
+<body>
+
+    <h1>AI 助手主菜单</h1> <!-- Head 1，意思是“一级大标题”。字会自动变大加粗 -->
+    
+    <button id="chat-btn">进入 AI 聊天助手</button> <!-- HTML 里的 <button> 标签，表示一个按钮。 -->
+    <!-- 极其重要！ 这就像是给这个按钮发了一张**“身份证”**。页面上可能有 100 个按钮，但我给这个起名叫 chat-btn，一会儿咱们的 JS 代码（神经系统）就能凭这个身份证号，极其精准地抓住它！-->
+    <br><br> <!-- HTML 里的 <br> 标签，表示换行。连续两个，就空一行 -->
+    <button id="image-btn">进入 AI 图像识别助手</button>
+    <br><br>
+    <button id="logout-btn">退出登录</button>
+
+    <!-- 网页的“神经系统”（JS 代码） -->
+    <script>
+        <!--翻译过来是“当整个网页刚刚**加载（load）**完毕时，立刻执行后面的动作”。-->
+        // 核心 1：大门保安（防止没登录的人偷溜进来）
+        window.addEventListener('load', function () {
+            const userId = sessionStorage.getItem('userId');
+            if (!userId) {
+                alert("你还没登录呢！滚回首页！");
+                window.location.href = '/entry'; // 踢回前端入口
+            }
+        });
+
+        // 核心 2：通用函数，用来向 C++ 拿新的 HTML 页面
+        function getPageFromServer(path) {
+            // 发起 GET 请求，去找你的 Router 拿页面
+            fetch(path, { method: 'GET' })
+                .then(res => res.text())     // 把拿到的数据当成文本解析
+                .then(html => {
+                    // 强行把当前网页的内容，替换成服务器新发来的 HTML
+                    document.open();
+                    document.write(html);
+                    document.close();
+                });
+        }
+
+        // 核心 3：给按钮绑定点击事件（发送网络请求）
+        document.getElementById('chat-btn').addEventListener('click', () => getPageFromServer('/chat'));
+        document.getElementById('image-btn').addEventListener('click', () => getPageFromServer('/upload'));
+
+        // 核心 4：登出逻辑（真正带着数据请求 C++）
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            const userId = sessionStorage.getItem('userId');
+            
+            // 向你的 ChatLogoutHandler 发送 POST 请求！
+            fetch('/user/logout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                // 把账号密码打包成 JSON 塞进快递盒（Body）
+                body: JSON.stringify({ userId: userId, type: 'manual' }) 
+            })
+            .then(() => {
+                sessionStorage.clear(); // 清除浏览器里的账号记忆
+                window.location.href = '/entry'; // 重新回到大门
+            });
+        });
+
+        // 核心 5：防丢盾牌（用户点红叉关闭网页时，射出最后的请求）
+        window.addEventListener('beforeunload', function () {
+            const userId = sessionStorage.getItem('userId');
+            if (userId) {
+                // sendBeacon 是浏览器特权函数，哪怕网页关了，也要把登出消息送到服务器！
+                const data = new Blob([JSON.stringify({ userId: userId, type: 'refresh' })], { type: 'application/json' });
+                navigator.sendBeacon('/user/logout', data);
+            }
+        });
+    </script>
+
+</body>
+</html>

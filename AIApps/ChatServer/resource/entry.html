@@ -1,4 +1,4 @@
-
+<!-- 
 <!DOCTYPE html>
 <html lang="zh">
 <head>
@@ -233,4 +233,101 @@ document.getElementById('register-form').addEventListener('submit', function(e){
 });
 </script>
 </body>
+</html> -->
+
+
+
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>极简版登录注册</title>
+</head>
+<body>
+
+    <h1>卡码AI助手 - 登录大门</h1>
+
+    <div id="login-div">
+        <h2>老用户登录</h2>
+        账号：<input type="text" id="login-username"><br><br>
+        密码：<input type="password" id="login-password"><br><br>
+        
+        <button id="login-btn">点击登录</button>
+        <button onclick="switchMode('register')">没有账号？去注册</button>
+    </div>
+
+    <div id="register-div" style="display: none;">
+        <h2>新用户注册</h2>
+        账号：<input type="text" id="register-username"><br><br>
+        密码：<input type="password" id="register-password"><br><br>
+        
+        <button id="register-btn">点击注册</button>
+        <button onclick="switchMode('login')">已有账号？返回登录</button>
+    </div>
+
+    <script>
+        // 核心 1：控制“登录”和“注册”界面的来回切换
+        function switchMode(mode) {
+            if (mode === 'register') {
+                document.getElementById('login-div').style.display = 'none';
+                document.getElementById('register-div').style.display = 'block';
+            } else {
+                document.getElementById('register-div').style.display = 'none';
+                document.getElementById('login-div').style.display = 'block';
+            }
+        }
+
+        // 核心 2：登录请求（对接你的 C++ ChatLoginHandler）
+        document.getElementById('login-btn').addEventListener('click', function() {
+            // 1. 从输入框里抠出账号和密码
+            const u = document.getElementById('login-username').value;
+            const p = document.getElementById('login-password').value;
+
+            // 2. 发射 POST 请求给 C++ 后端
+            fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: u, password: p }) // 打包成 JSON
+            })
+            .then(res => {
+                // 3. 检查 C++ 返回的状态码
+                if (res.status === 200) return res.json(); // 成功，解析返回的 JSON 数据
+                if (res.status === 401) throw new Error('账号或密码错误！(401)');
+                if (res.status === 403) throw new Error('该账号已在其他地方登录！(403)');
+                throw new Error('服务器炸了，请求失败！');
+            })
+            .then(data => {
+                // 4. 登录成功！把 C++ 发来的 userId 存进本地口袋
+                sessionStorage.setItem('userId', data.userId);
+                alert('登录成功！准备进入菜单！');
+                window.location.href = '/menu'; // 让浏览器跳到咱们刚刚看的菜单页
+            })
+            .catch(err => alert(err.message)); // 报错就弹窗
+        });
+
+        // 核心 3：注册请求（对接你的 C++ ChatRegisterHandler）
+        document.getElementById('register-btn').addEventListener('click', function() {
+            const u = document.getElementById('register-username').value;
+            const p = document.getElementById('register-password').value;
+
+            fetch('/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: u, password: p })
+            })
+            .then(res => {
+                // 检查 C++ 返回的注册状态码
+                if (res.status === 200) {
+                    alert('注册成功！请重新登录。');
+                    switchMode('login'); // 自动切回登录界面
+                } else if (res.status === 409) {
+                    alert('用户名已被注册！(409)');
+                } else {
+                    alert('注册失败！');
+                }
+            });
+        });
+    </script>
+</body>
 </html>
+

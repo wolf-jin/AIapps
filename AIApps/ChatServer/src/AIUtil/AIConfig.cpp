@@ -44,7 +44,7 @@ std::string AIConfig::buildToolList() const {
             oss << key;
             first = false;
         }
-        oss << ") ¡ú " << t.desc << "\n";
+        oss << ") -> " << t.desc << "\n";
     }
     return oss.str();
 }

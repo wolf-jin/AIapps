@@ -58,9 +58,12 @@ json AliyunStrategy::buildRequest(const std::vector<std::tuple<int, std::string,
 
     for (const auto& msgItem : messages) {
         json msg;
-        int is_user = std::get<0>(msgItem); // 拿取绝对真实的身份
-        msg["role"] = (is_user == 1) ? "user" : "assistant"; 
-        msg["content"] = std::get<1>(msgItem); // 拿取真实的文本内容
+
+        auto [is_user, content, timestamp] = msgItem; // 结构化绑定，直接拿到身份、内容和时间戳
+
+        msg["role"] = (is_user == 1) ? "user" : "assistant"; // 根据身份标识设置角色
+        msg["content"] = content; //
+        
         msgArray.push_back(msg);
     }
     
@@ -128,9 +131,11 @@ json DouBaoStrategy::buildRequest(const std::vector<std::tuple<int, std::string,
 
     for (const auto& msgItem : messages) {
         json msg;
-        int is_user = std::get<0>(msgItem);
+        auto [is_user, content, timestamp] = msgItem; // 结构化绑定，直接拿到身份、内容和时间戳
+
         msg["role"] = (is_user == 1) ? "user" : "assistant";
-        msg["content"] = std::get<1>(msgItem);
+        msg["content"] = content;
+
         msgArray.push_back(msg);
     }
     
@@ -177,9 +182,11 @@ json AliyunRAGStrategy::buildRequest(const std::vector<std::tuple<int, std::stri
     json msgArray = json::array();
     for (const auto& msgItem : messages) {
         json msg;
-        int is_user = std::get<0>(msgItem);
+        auto [is_user, content, timestamp] = msgItem; // 结构化绑定，直接拿到身份、内容和时间戳
+
         msg["role"] = (is_user == 1) ? "user" : "assistant";
-        msg["content"] = std::get<1>(msgItem);
+        msg["content"] = content;
+
         msgArray.push_back(msg);
     }
     payload["input"]["messages"] = msgArray;
@@ -218,9 +225,9 @@ json AliyunMcpStrategy::buildRequest(const std::vector<std::tuple<int, std::stri
 
     for (const auto& msgItem : messages) {
         json msg;
-        int is_user = std::get<0>(msgItem);
+        auto [is_user, content, timestamp] = msgItem; // 结构化绑定，直接拿到身份、内容和时间戳
         msg["role"] = (is_user == 1) ? "user" : "assistant";
-        msg["content"] = std::get<1>(msgItem);
+        msg["content"] = content;
         msgArray.push_back(msg);
     }
     payload["messages"] = msgArray;
