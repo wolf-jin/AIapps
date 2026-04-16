@@ -11,7 +11,7 @@ void ChatLoginHandler::handle(const http::HttpRequest& req, http::HttpResponse* 
         resp->setCloseConnection(true);
         resp->setContentType("application/json");
         resp->setContentLength(0);
-        resp->setBody("");
+        resp->setBody("");  
         return;
     }
 

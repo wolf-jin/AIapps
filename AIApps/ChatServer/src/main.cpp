@@ -8,6 +8,8 @@
 
 #include"../include/ChatServer.h"
 
+
+
 const std::string RABBITMQ_HOST = "localhost";
 const std::string QUEUE_NAME = "sql_queue";
 const int THREAD_NUM = 2; // 表示 RabbitMQ 消费线程池里有 2 个 worker 线程。

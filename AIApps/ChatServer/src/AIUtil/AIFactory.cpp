@@ -10,7 +10,6 @@
 
 所以工厂是全局唯一的。
 
-
 */
 StrategyFactory& StrategyFactory::instance() {
     static StrategyFactory factory;

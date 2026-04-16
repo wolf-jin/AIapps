@@ -36,7 +36,7 @@ void AIMenuHandler::handle(const http::HttpRequest& req, http::HttpResponse* res
 
         std::vector<char> buffer(fileOperater.size());
         fileOperater.readFile(buffer); // ļ
-        std::string htmlContent(buffer.data(), buffer.size());
+        std::string htmlContent(buffer.data(), buffer.size()); // 二进制字节流转为string
 
 
         size_t headEnd = htmlContent.find("</head>");

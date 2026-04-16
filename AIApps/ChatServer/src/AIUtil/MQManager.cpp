@@ -1,6 +1,16 @@
 #include"../include/AIUtil/MQManager.h"
 
 // ------------------- MQManager -------------------
+/*
+为什么要在构造函数里一口气把 5 个连接全建好？
+
+真相： 建立 TCP 连接和进行 RabbitMQ 的账号密码认证，是极其耗时的操作（可能需要几十上百毫秒）。如果等用户发消息的时候再临时去连，用户就会觉得卡。
+
+这种在服务器启动时（0 流量时）就提前把连接全建好的做法，在工业界叫 “连接预热 (Pre-warming)”。等真正的高并发打进来时，直接从池子里抓起现成的连接就用，性能直接起飞！
+
+*/
+
+
 MQManager::MQManager(size_t poolSize)
     : poolSize_(poolSize), counter_(0) {
     for (size_t i = 0; i < poolSize_; ++i) {
